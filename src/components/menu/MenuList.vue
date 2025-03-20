@@ -122,7 +122,7 @@ import { ref, computed, reactive, onMounted, h } from 'vue'
 import { message } from 'ant-design-vue'
 import MenuDrawer from "./MenuDrawer.vue";
 import MenuSonDrawer from "./MenuSonDrawer.vue";
-import request from "@/utils/request";
+import request from "@/utils/request.ts";
 
 // 定义菜单项接口
 interface MenuItem {

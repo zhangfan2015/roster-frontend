@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import MutiSelect from "@/components/MutiSelect.vue";
+import MutiSelect from "@/components/menu/MutiSelect.vue";
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router'
 import request from '@/utils/request'

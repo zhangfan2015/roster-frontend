@@ -4,8 +4,8 @@ import router from '@/router'
 
 // 创建axios实例
 const request = axios.create({
-  // baseURL: 'http://192.168.2.11:8080',
-  baseURL: 'http://124.220.206.34:8080',
+  baseURL: 'http://192.168.2.11:8080',
+  // baseURL: 'http://124.220.206.34:8080',
   timeout: 5000
 })
 

@@ -70,7 +70,7 @@ const fetchPositionList = async () => {
     loading.value = true
     const { data } = await request.get('/api/position/getPositionList', {
       params: {
-        page: pagination.pageNo,
+        pageNo: pagination.pageNo,
         pageSize: pagination.pageSize,
         positionName: searchForm.positionName
       }
@@ -195,7 +195,7 @@ const cancel = (id: number) => {
     <a-card class="search-area" :bordered="false">
       <a-input-search
           v-model:value="positionName"
-          placeholder="请输入菜单名称"
+          placeholder="请输入职位名称"
           style="width: 300px"
           @search="onSearch"
       />
@@ -274,7 +274,7 @@ const cancel = (id: number) => {
     <!-- 添加/编辑表单对话框 -->
     <PositionForm
         v-model:visible="formVisible"
-        :title="currentRecord.id ? '编辑公司' : '添加公司'"
+        :title="currentRecord.id ? '编辑职位' : '添加职位'"
         @success="handleFormSuccess"
     />
   </div>

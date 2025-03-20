@@ -18,25 +18,27 @@
       ref="formRef"
     >
       <a-form-item
-        label="职位名称"
-        name="positionName"
-        :rules="[{ required: true, message: '请输入职位名称!' }]"
+        label="角色名称"
+        name="roleName"
+        :rules="[{ required: true, message: '请输入角色名称!' }]"
       >
-        <a-input v-model:value="formState.positionName" />
+        <a-input v-model:value="formState.roleName" />
       </a-form-item>
 
       <a-form-item
-        label="部门"
-        name="departName"
-        :rules="[{ required: true, message: '请选择部门!' }]"
+        label="角色编码"
+        name="roleCode"
+        :rules="[{ required: true, message: '请输入角色编码!' }]"
       >
-        <a-select v-model:value="formState.departName">
-          <a-select-option value="开发部">开发部</a-select-option>
-          <a-select-option value="测试部">测试部</a-select-option>
-        </a-select>
+        <a-input v-model:value="formState.roleCode" />
       </a-form-item>
 
-
+      <a-form-item
+          label="备注"
+          name="remark"
+      >
+        <a-textarea v-model:value="formState.remark" :rows="4" placeholder="请输入备注"/>
+      </a-form-item>
 
     </a-form>
   </a-modal>
@@ -55,13 +57,15 @@ const formRef = ref<FormInstance>()
 const confirmLoading = ref<boolean>(false)
 
 interface FormState {
-  positionName: string
-  departName: string
+  roleName: string
+  roleCode: string
+  remark: string
 }
 
 const formState = reactive<FormState>({
-  positionName: '',
-  departName: '',
+  roleName: '',
+  roleCode: '',
+  remark: '',
 })
 
 const handleOk = () => {
@@ -82,7 +86,7 @@ const handleCancel = () => {
 const onFinish = async (values: FormState) => {
   try {
     confirmLoading.value = true
-    const { data } = await request.post('/api/position/add', values)
+    const { data } = await request.post('/api/role/addRole', values)
     if (data.code === 200) {
       message.success('添加成功')
       emit('success')

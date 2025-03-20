@@ -2,6 +2,9 @@
 import { ref , onMounted} from 'vue'
 import { useRouter } from 'vue-router'
 import request from '@/utils/request'
+import { Modal ,message,Popover } from 'ant-design-vue'
+import MessagePopover from "@/components/message/MessagePopover.vue";
+import ManualPopover from "@/components/manual/ManualPopover.vue"; // 引入 Modal 组件
 
 const router = useRouter()
 
@@ -51,6 +54,27 @@ const handleMenuClick = (url: string) => {
     router.push("/home"+url);
   }
 }
+
+// 添加退出登录逻辑
+const handleLogout = () => {
+  Modal.confirm({
+    title: '确认退出',
+    content: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        // 这里可以添加调用退出登录接口
+        localStorage.removeItem('token'); // 清除token
+        message.success('退出成功');
+        router.push('/login');
+        // }
+      } catch (error) {
+        message.error('退出失败');
+      }
+    }
+  });
+}
 </script>
 
 <template>
@@ -81,9 +105,19 @@ const handleMenuClick = (url: string) => {
       <!-- 右侧 top -->
       <div class="nav_right">
         <a href="" class="zhedie"></a>
-        <a href="" class="tongzhi"></a>
-        <a href="" class="shuomingshu"></a>
-        <a href="" class="touxiang"></a>
+        <Popover placement="bottomRight" trigger="click" :overlayStyle="{ padding: 0 }">
+          <template #content>
+            <MessagePopover />
+          </template>
+          <a class="tongzhi"></a>
+        </Popover>
+        <Popover placement="bottomRight" trigger="click" :overlayStyle="{ padding: 0 }">
+          <template #content>
+            <ManualPopover />
+          </template>
+          <a class="shuomingshu"></a>
+        </Popover>
+        <a class="touxiang" @click="handleLogout"></a>
         <p class="top_name">admin</p>
         <div class="tishi"></div>
       </div>
@@ -318,5 +352,12 @@ body{
   overflow: auto;
   background-color: #f0f2f5;
   padding: 20px;
+}
+.touxiang {
+  cursor: pointer;
+}
+
+.touxiang:hover {
+  opacity: 0.8;
 }
 </style>

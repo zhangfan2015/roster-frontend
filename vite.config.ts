@@ -46,8 +46,8 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': { // 是一个路径前缀，表示所有以/api开头的请求都将被代理
-        // target: 'http://192.168.2.11:8080',
-        target: 'http://124.220.206.34:8080',
+        target: 'http://192.168.2.11:8080',
+        // target: 'http://124.220.206.34:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

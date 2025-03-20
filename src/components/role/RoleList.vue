@@ -1,81 +1,44 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch} from 'vue'
 import { message } from 'ant-design-vue'
-import { PlusOutlined } from "@ant-design/icons-vue"
+import { DownOutlined } from "@ant-design/icons-vue"
 import request from '@/utils/request.ts'
-import CompanyForm from "@/components/company/CompanyForm.vue";
 import type { UnwrapRef } from 'vue';
 import { cloneDeep } from 'lodash-es';
+import RoleForm from "@/components/role/RoleForm.vue";
+import RoleUserDrawer from "@/components/role/RoleUserDrawer.vue";
 
-interface CompanyRecord {
+
+interface RoleRecord {
   id?: number
-  companyName?: string
-  address?: string
-  phone?: string
-  email?: string
-  scale?: string
-  description?: string
-  createTime?: string
-  companyType?: string
-  tel?: string
-  clTime?: string
-  content?: string
-  registCapital?: string
-  people?: string
-  status?: string
+  roleName?: string
+  roleCode?: string
+  remark?: string
+  status?: number
 }
 
 // 搜索表单数据
 const searchForm = reactive({
-  companyName: '',
+  roleName: '',
+  roleCode: '',
 })
 
 // 表格加载状态
 const loading = ref(false)
-const formVisible = ref(false)
-const currentRecord = ref<CompanyRecord>({})
-const companyName = ref('')
+
 // 表格列定义
 const columns = [
-  // {
-  //   title: '创建时间',
-  //   dataIndex: 'createTime',
-  // },
   {
-    title: '公司名称',
-    dataIndex: 'companyName',
+    title: '角色名称',
+    dataIndex: 'roleName',
   },
   {
-    title: '公司类型',
-    dataIndex: 'companyType',
+    title: '角色编码',
+    dataIndex: 'roleCode',
   },
   {
-    title: '联系电话',
-    dataIndex: 'tel',
-  },
-  {
-    title: '公司经营地址',
-    dataIndex: 'address',
-  },
-  {
-    title: '电子邮箱',
-    dataIndex: 'email',
-  },
-  {
-    title: '成立日期',
-    dataIndex: 'clTime',
-  },
-  {
-    title: '公司简介',
-    dataIndex: 'content',
-  },
-  {
-    title: '注册资本',
-    dataIndex: 'registCapital',
-  },
-  {
-    title: '法人',
-    dataIndex: 'people',
+    title: '备注',
+    dataIndex: 'remark',
   },
   {
     title: '状态',
@@ -88,20 +51,26 @@ const columns = [
     width: 210,
     fixed: 'right' as const,
   },
+
 ]
 
 onMounted(() => {
-  fetchCompanyList()
+  fetchRoleList()
 })
 
-const fetchCompanyList = async () => {
+const handleFormSuccess = () => {
+  fetchRoleList()
+}
+
+const fetchRoleList = async () => {
   try {
     loading.value = true
-    const { data } = await request.get('/api/company/getCompanyList', {
+    const { data } = await request.get('/api/role/getRoleList', {
       params: {
         pageNo: pagination.pageNo,
         pageSize: pagination.pageSize,
-        company: searchForm.companyName
+        roleName: searchForm.roleName,
+        roleCode: searchForm.roleCode,
       }
     })
 
@@ -120,6 +89,20 @@ const fetchCompanyList = async () => {
 
 // 表格数据
 const dataSource = ref([])
+const formVisible = ref(false)
+const currentRecord = ref<RoleRecord>({})
+
+// 用户抽屉相关
+const userDrawerVisible = ref(false)
+const currentRoleId = ref<number | string>('')
+
+const handleViewUsers = (record: RoleRecord) => {
+  currentRoleId.value = record.id || ''
+  currentRoleData.value = record  // 保存完整的行数据
+  userDrawerVisible.value = true
+}
+const currentRoleData = ref<RoleRecord>({})
+
 
 // 分页配置
 const pagination = reactive({
@@ -130,40 +113,41 @@ const pagination = reactive({
   showQuickJumper: true,
 })
 
-const onSearch = async (value) => {
-
-  const {data} = await request.get('/api/company/getCompanyList', {
-    params: {
-      companyName: value
-    }
-  })
-  if (data.success) {
-    dataSource.value = data.result.records
-  }
-}
-//
-// const handleReset = () => {
-//   searchForm.companyName = ''
-//   pagination.pageNo = 1
-//   fetchCompanyList()
-// }
-
 // 新增方法
 const handleAdd = () => {
   currentRecord.value = {}
   formVisible.value = true
 }
 
+const handleSearch = async () => {
+  const {data} = await request.get('/api/role/getRoleList', {
+    params: {
+      roleName: searchForm.roleName,
+      roleCode: searchForm.roleCode
+    }
+  })
+  if (data.success) {
+    dataSource.value = data.result.records
+  }
+}
+
+const handleReset = () => {
+  searchForm.roleName = ''
+  searchForm.roleCode = ''
+  pagination.pageNo = 1
+  fetchRoleList()
+}
+
 
 // 删除方法
 const handleDelete = async (record: any) => {
   try {
-    const { data } = await request.delete('/api/company/delete', {
+    const { data } = await request.delete('/api/role/delete', {
       params: { id: record.id }
     })
     if (data.code === 200) {
       message.success('删除成功')
-      fetchCompanyList()
+      fetchRoleList()
     } else {
       message.error(data.message || '删除失败')
     }
@@ -175,36 +159,36 @@ const handleDelete = async (record: any) => {
 const handleTableChange = (pag: any) => {
   pagination.pageNo = pag.pageNo
   pagination.pageSize = pag.pageSize
-  fetchCompanyList()
+  fetchRoleList()
 }
 
-const handleFormSuccess = () => {
-  fetchCompanyList()
-}
 
 // 编辑相关的数据和方法
-const editableData: UnwrapRef<Record<string, CompanyRecord>> = reactive({})
+const editableData: UnwrapRef<Record<string, RoleRecord>> = reactive({})
 
-const edit = (record: CompanyRecord) => {
+const edit = (record: RoleRecord) => {
   editableData[record.id as number] = cloneDeep(record)
 }
 
-const dongjie = async (record: CompanyRecord) => {
-  const {data} = await request.put('/api/company/dongjie', record)
+
+const dongjie = async (record: RoleRecord) => {
+  const {data} = await request.put('/api/role/dongjie', record)
   if (data.success) {
     message.success('编辑成功！')
-    fetchCompanyList()
+    fetchRoleList()
+  }else {
+    message.error(data.message);
   }
 }
 
-const save = async (record: CompanyRecord) => {
+const save = async (record: RoleRecord) => {
   try {
     const row = editableData[record.id as number]
-    const { data } = await request.put('/api/company/edit', row)
+    const { data } = await request.put('/api/role/edit', row)
     if (data.code === 200) {
       message.success('编辑成功')
       delete editableData[record.id as number]
-      fetchCompanyList()
+      fetchRoleList()
     } else {
       message.error(data.message || '编辑失败')
     }
@@ -220,23 +204,36 @@ const cancel = (id: number) => {
 
 <template>
   <div class="table-page">
-    <!-- 搜索区域 -->
     <a-card class="search-area" :bordered="false">
-      <a-input-search
-          v-model:value="companyName"
-          placeholder="请输入菜单名称"
-          style="width: 300px"
-          @search="onSearch"
-      />
+      <a-form layout="inline">
+        <a-form-item label="角色名称">
+          <a-input
+              v-model:value="searchForm.roleName"
+              placeholder="请输入角色名称"
+              allow-clear
+          />
+        </a-form-item>
+        <a-form-item label="角色编号">
+          <a-input
+              v-model:value="searchForm.roleCode"
+              placeholder="请输入角色编号"
+              allow-clear
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="handleSearch">搜索</a-button>
+          <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
+        </a-form-item>
+      </a-form>
     </a-card>
 
     <!-- 按钮区域 -->
     <div class="button-area">
       <a-space>
-        <a-button type="primary" @click="handleAdd">
-          <template #icon><plus-outlined /></template>
-          新增
-        </a-button>
+                <a-button type="primary" @click="handleAdd">
+                  <template #icon><plus-outlined /></template>
+                  新增
+                </a-button>
         <!--        <a-button @click="handleExport">-->
         <!--          <template #icon><download-outlined /></template>-->
         <!--          导出-->
@@ -254,7 +251,7 @@ const cancel = (id: number) => {
         bordered
     >
       <template #bodyCell="{ column, text, record }">
-        <template v-if="column.dataIndex === 'companyName' || column.dataIndex === 'address'">
+        <template v-if="column.dataIndex === 'roleName' || column.dataIndex === 'roleCode' || column.dataIndex === 'remark'">
           <div class="editable-cell">
             <template v-if="editableData[record.id]">
               <a-input
@@ -268,7 +265,7 @@ const cancel = (id: number) => {
           </div>
         </template>
         <template v-else-if="column.key === 'status'">
-          <a-tag :color="record.status === 0 ? 'success' : 'error'">
+          <a-tag :color="record.status === 0 ? 'processing' : 'error'">
             {{ record.status === 0 ? '正常' : '冻结' }}
           </a-tag>
         </template>
@@ -282,30 +279,50 @@ const cancel = (id: number) => {
             <template v-else>
               <a-space>
                 <a @click="edit(record)">编辑</a>
-                <a-divider type="vertical" />
-                <a @click="dongjie(record)" :class="record.status === 1 ? 'text-success' : 'text-warning'">
-                  {{ record.status === 1 ? '解除' : '冻结' }}
-                </a>
-                <a-divider type="vertical" />
-                <a-popconfirm
-                    title="确定要删除这条记录吗？"
-                    @confirm="handleDelete(record)"
-                >
-                  <a class="text-danger">删除</a>
-                </a-popconfirm>
               </a-space>
+              <a-divider type="vertical" />
+              <a @click="handleViewUsers(record)">用户</a>
+              <a-divider type="vertical" />
+              <a-dropdown>
+                <a class="ant-dropdown-link" @click.prevent>
+                  更多
+                  <DownOutlined />
+                </a>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item>
+                      <a-popconfirm
+                          title="确定要删除这条记录吗？"
+                          @confirm="handleDelete(record)"
+                      >
+                        <a class="text-danger">删除</a>
+                      </a-popconfirm>
+                    </a-menu-item>
+                    <a-menu-item>
+                      <a @click="dongjie(record)">
+                        {{record.status === 0 ? '冻结' : '解除' }}
+                      </a>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
             </template>
           </div>
         </template>
       </template>
     </a-table>
 
-    <!-- 添加/编辑表单对话框 -->
-    <CompanyForm
-      v-model:visible="formVisible"
-      :title="currentRecord.id ? '编辑公司' : '添加公司'"
-      @success="handleFormSuccess"
+<RoleForm  v-model:visible="formVisible"
+           :title="currentRecord.id ? '编辑角色' : '添加角色'"
+           @success="handleFormSuccess"
+/>
+
+    <RoleUserDrawer
+        v-model:visible="userDrawerVisible"
+        :role-id="currentRoleId"
+        :role-data="currentRoleData"
     />
+
   </div>
 
 </template>

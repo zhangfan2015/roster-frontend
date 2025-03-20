@@ -1,86 +1,74 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { PlusOutlined } from "@ant-design/icons-vue"
+import { DownOutlined } from "@ant-design/icons-vue"
 import request from '@/utils/request.ts'
-import CompanyForm from "@/components/company/CompanyForm.vue";
 import type { UnwrapRef } from 'vue';
 import { cloneDeep } from 'lodash-es';
+import PasswordModal from "@/components/user/PasswordModal.vue";
 
-interface CompanyRecord {
+
+interface UserRecord {
   id?: number
-  companyName?: string
-  address?: string
-  phone?: string
+  username?: string
+  realname?: string
+  sex?: string
+  age?: string
   email?: string
-  scale?: string
-  description?: string
-  createTime?: string
-  companyType?: string
-  tel?: string
-  clTime?: string
-  content?: string
-  registCapital?: string
-  people?: string
-  status?: string
+  phone?: string
+  img?: string
+  departName?: string
+  status?: number
+  delFlag?: number
 }
 
 // 搜索表单数据
 const searchForm = reactive({
-  companyName: '',
+  username: '',
+  realname: '',
 })
 
 // 表格加载状态
 const loading = ref(false)
-const formVisible = ref(false)
-const currentRecord = ref<CompanyRecord>({})
-const companyName = ref('')
 // 表格列定义
 const columns = [
-  // {
-  //   title: '创建时间',
-  //   dataIndex: 'createTime',
-  // },
   {
-    title: '公司名称',
-    dataIndex: 'companyName',
+    title: '账号',
+    dataIndex: 'username',
   },
   {
-    title: '公司类型',
-    dataIndex: 'companyType',
+    title: '姓名',
+    dataIndex: 'realname',
   },
   {
-    title: '联系电话',
-    dataIndex: 'tel',
+    title: '性别',
+    dataIndex: 'sex',
   },
   {
-    title: '公司经营地址',
-    dataIndex: 'address',
+    title: '年龄',
+    dataIndex: 'age',
   },
   {
-    title: '电子邮箱',
+    title: '手机号',
+    dataIndex: 'phone',
+  },
+  {
+    title: '邮箱',
     dataIndex: 'email',
   },
   {
-    title: '成立日期',
-    dataIndex: 'clTime',
+    title: '头像',
+    dataIndex: 'img',
   },
   {
-    title: '公司简介',
-    dataIndex: 'content',
-  },
-  {
-    title: '注册资本',
-    dataIndex: 'registCapital',
-  },
-  {
-    title: '法人',
-    dataIndex: 'people',
+    title: '所属部门',
+    dataIndex: 'departName',
   },
   {
     title: '状态',
     dataIndex: 'status',
-    key: 'status'
+    key: 'status',
+    width: 100
   },
   {
     title: '操作',
@@ -91,17 +79,18 @@ const columns = [
 ]
 
 onMounted(() => {
-  fetchCompanyList()
+  fetchUserList()
 })
 
-const fetchCompanyList = async () => {
+const fetchUserList = async () => {
   try {
     loading.value = true
-    const { data } = await request.get('/api/company/getCompanyList', {
+    const { data } = await request.get('/api/user/getUserList', {
       params: {
         pageNo: pagination.pageNo,
         pageSize: pagination.pageSize,
-        company: searchForm.companyName
+        username: searchForm.username,
+        realname: searchForm.realname,
       }
     })
 
@@ -130,40 +119,36 @@ const pagination = reactive({
   showQuickJumper: true,
 })
 
-const onSearch = async (value) => {
 
-  const {data} = await request.get('/api/company/getCompanyList', {
+const handleSearch = async () => {
+  const {data} = await request.get('/api/user/getUserList', {
     params: {
-      companyName: value
+      username: searchForm.username,
+      realname: searchForm.realname
     }
   })
   if (data.success) {
     dataSource.value = data.result.records
   }
 }
-//
-// const handleReset = () => {
-//   searchForm.companyName = ''
-//   pagination.pageNo = 1
-//   fetchCompanyList()
-// }
 
-// 新增方法
-const handleAdd = () => {
-  currentRecord.value = {}
-  formVisible.value = true
+const handleReset = () => {
+  searchForm.username = ''
+  searchForm.realname = ''
+  pagination.pageNo = 1
+  fetchUserList()
 }
 
 
 // 删除方法
 const handleDelete = async (record: any) => {
   try {
-    const { data } = await request.delete('/api/company/delete', {
+    const { data } = await request.delete('/api/user/delete', {
       params: { id: record.id }
     })
     if (data.code === 200) {
       message.success('删除成功')
-      fetchCompanyList()
+      fetchUserList()
     } else {
       message.error(data.message || '删除失败')
     }
@@ -175,36 +160,43 @@ const handleDelete = async (record: any) => {
 const handleTableChange = (pag: any) => {
   pagination.pageNo = pag.pageNo
   pagination.pageSize = pag.pageSize
-  fetchCompanyList()
+  fetchUserList()
 }
 
-const handleFormSuccess = () => {
-  fetchCompanyList()
-}
 
 // 编辑相关的数据和方法
-const editableData: UnwrapRef<Record<string, CompanyRecord>> = reactive({})
+const editableData: UnwrapRef<Record<string, UserRecord>> = reactive({})
 
-const edit = (record: CompanyRecord) => {
+const edit = (record: UserRecord) => {
   editableData[record.id as number] = cloneDeep(record)
 }
 
-const dongjie = async (record: CompanyRecord) => {
-  const {data} = await request.put('/api/company/dongjie', record)
+const passwordModalVisible = ref(false)
+const currentUsername = ref('')
+
+const editPs = async (record: UserRecord) => {
+  currentUsername.value = record.username || ''
+  passwordModalVisible.value = true
+}
+
+const dongjie = async (record: UserRecord) => {
+  const {data} = await request.put('/api/user/updateStatus', record)
   if (data.success) {
     message.success('编辑成功！')
-    fetchCompanyList()
+    fetchUserList()
+  }else {
+    message.error(data.message);
   }
 }
 
-const save = async (record: CompanyRecord) => {
+const save = async (record: UserRecord) => {
   try {
     const row = editableData[record.id as number]
-    const { data } = await request.put('/api/company/edit', row)
+    const { data } = await request.put('/api/user/edit', row)
     if (data.code === 200) {
       message.success('编辑成功')
       delete editableData[record.id as number]
-      fetchCompanyList()
+      fetchUserList()
     } else {
       message.error(data.message || '编辑失败')
     }
@@ -220,23 +212,36 @@ const cancel = (id: number) => {
 
 <template>
   <div class="table-page">
-    <!-- 搜索区域 -->
     <a-card class="search-area" :bordered="false">
-      <a-input-search
-          v-model:value="companyName"
-          placeholder="请输入菜单名称"
-          style="width: 300px"
-          @search="onSearch"
-      />
+      <a-form layout="inline">
+        <a-form-item label="用户账号">
+          <a-input
+              v-model:value="searchForm.username"
+              placeholder="请输入用户账号"
+              allow-clear
+          />
+        </a-form-item>
+        <a-form-item label="用户姓名">
+          <a-input
+              v-model:value="searchForm.realname"
+              placeholder="请输入用户姓名"
+              allow-clear
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="handleSearch">搜索</a-button>
+          <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
+        </a-form-item>
+      </a-form>
     </a-card>
 
     <!-- 按钮区域 -->
     <div class="button-area">
       <a-space>
-        <a-button type="primary" @click="handleAdd">
-          <template #icon><plus-outlined /></template>
-          新增
-        </a-button>
+<!--        <a-button type="primary" @click="handleAdd">-->
+<!--          <template #icon><plus-outlined /></template>-->
+<!--          新增-->
+<!--        </a-button>-->
         <!--        <a-button @click="handleExport">-->
         <!--          <template #icon><download-outlined /></template>-->
         <!--          导出-->
@@ -254,7 +259,7 @@ const cancel = (id: number) => {
         bordered
     >
       <template #bodyCell="{ column, text, record }">
-        <template v-if="column.dataIndex === 'companyName' || column.dataIndex === 'address'">
+        <template v-if="column.dataIndex === 'realname' || column.dataIndex === 'age'  || column.dataIndex === 'sex' || column.dataIndex === 'phone'">
           <div class="editable-cell">
             <template v-if="editableData[record.id]">
               <a-input
@@ -268,8 +273,8 @@ const cancel = (id: number) => {
           </div>
         </template>
         <template v-else-if="column.key === 'status'">
-          <a-tag :color="record.status === 0 ? 'success' : 'error'">
-            {{ record.status === 0 ? '正常' : '冻结' }}
+          <a-tag :color="record.status === 0 ? 'success' : record.status === 1 ? 'processing' : 'error'">
+            {{ record.status === 0 ? '未注册' : record.status === 1 ? '正常' : '冻结' }}
           </a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
@@ -282,30 +287,47 @@ const cancel = (id: number) => {
             <template v-else>
               <a-space>
                 <a @click="edit(record)">编辑</a>
-                <a-divider type="vertical" />
-                <a @click="dongjie(record)" :class="record.status === 1 ? 'text-success' : 'text-warning'">
-                  {{ record.status === 1 ? '解除' : '冻结' }}
-                </a>
-                <a-divider type="vertical" />
-                <a-popconfirm
-                    title="确定要删除这条记录吗？"
-                    @confirm="handleDelete(record)"
-                >
-                  <a class="text-danger">删除</a>
-                </a-popconfirm>
               </a-space>
+              <a-divider type="vertical" />
+              <a-dropdown>
+                <a class="ant-dropdown-link" @click.prevent>
+                  更多
+                  <DownOutlined />
+                </a>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item>
+                      <a @click="editPs(record)">修改密码</a>
+                    </a-menu-item>
+                    <a-menu-item>
+                      <a-popconfirm
+                          title="确定要删除这条记录吗？"
+                          @confirm="handleDelete(record)"
+                      >
+                        <a class="text-danger">删除</a>
+                      </a-popconfirm>
+                    </a-menu-item>
+                    <a-menu-item>
+                      <a @click="dongjie(record)">
+                        {{ record.status === 0 ? '未注册' : record.status === 1 ? '冻结' : '解除' }}
+                      </a>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
             </template>
           </div>
         </template>
       </template>
     </a-table>
 
-    <!-- 添加/编辑表单对话框 -->
-    <CompanyForm
-      v-model:visible="formVisible"
-      :title="currentRecord.id ? '编辑公司' : '添加公司'"
-      @success="handleFormSuccess"
+    <!--修改密码form-->
+    <PasswordModal
+        v-model:visible="passwordModalVisible"
+        :username="currentUsername"
+        @success="fetchUserList"
     />
+
   </div>
 
 </template>
